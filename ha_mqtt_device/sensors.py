@@ -22,7 +22,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import Field, model_validator
 
-from ha_mqtt_discoverable import (
+from . import (
     Discoverable,
     EntityInfo,
     Subscriber,

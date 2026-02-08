@@ -1,10 +1,14 @@
-# ha-mqtt-discoverable
+# ha-mqtt-device
 
 [![License](https://img.shields.io/github/license/unixorn/ha-mqtt-discoverable.svg)](https://opensource.org/license/apache-2-0/)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![GitHub last commit (branch)](https://img.shields.io/github/last-commit/unixorn/ha-mqtt-discoverable/main.svg)](https://github.com/unixorn/ha-mqtt-discoverable)
-[![Downloads](https://static.pepy.tech/badge/ha-mqtt-discoverable)](https://pepy.tech/project/ha-mqtt-discoverable)
-[![Coverage badge](https://raw.githubusercontent.com/unixorn/ha-mqtt-discoverable/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/unixorn/ha-mqtt-discoverable/blob/python-coverage-comment-action-data/htmlcov/index.html)
+
+This is a fork of [ha-mqtt-discoverable](https://github.com/unixorn/ha-mqtt-discoverable) under the same license.
+
+Changes:
+* Renamed package to ha_mqtt_device to avoid collision when installed alongside original ha_mqtt_discoverable.
+
+
+**Original readme follows. If you use the fork, replace `ha_mqtt_discoverable` by`ha_mqtt_device` in any code examples.**
 
 A Python 3 module that takes advantage of Home Assistant's [MQTT discovery protocol](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) to create sensors without having to define anything on the HA side.
 

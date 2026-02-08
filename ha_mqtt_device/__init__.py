@@ -23,7 +23,7 @@ from paho.mqtt.client import MQTTMessageInfo
 from paho.mqtt.enums import CallbackAPIVersion
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from ha_mqtt_discoverable.utils import clean_string
+from .utils import clean_string
 
 logger = logging.getLogger(__name__)
 

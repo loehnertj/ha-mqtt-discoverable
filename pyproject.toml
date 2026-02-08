@@ -1,8 +1,8 @@
 [project]
-name = "ha-mqtt-discoverable"
+name = "ha-mqtt-device"
 version = "0.23.0"
 description = "Python library for creating MQTT entities compatible with Home Assistant"
-authors = [{name = "Joe Block", email = "jpb@unixorn.net"}]
+authors = [{name = "Joe Block", email = "jpb@unixorn.net"}, {name = "Johannes Loehnert", email = "loehnert.kde@gmx.de"}]
 readme = "README.md"
 requires-python = ">=3.10.0,<4.0"
 dependencies = [
@@ -12,7 +12,7 @@ dependencies = [
 
 
 [tool.poetry]
-packages = [{include = "ha_mqtt_discoverable"}]
+packages = [{include = "ha_mqtt_device"}]
 
 
 [tool.poetry.group.dev.dependencies]
