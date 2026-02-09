@@ -13,7 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-from http import client
 import logging
 import random
 import string
@@ -110,13 +109,16 @@ def test_command_callbacks(make_subscriber, mqtt_client):
     assert event1.wait(1)
     assert event2.wait(1)
 
+
 def test_external_client_with_on_connect_not_replaced(make_subscriber):
     """If the client already brings an on_connect callback, it won't
     be touched when passed into a subscriber.
     """
     client = create_external_mqtt_client(False)
+
     def my_on_connect(client, userdata, flags, rc):
         pass
+
     client.on_connect = my_on_connect
     subscriber = make_subscriber(lambda *_: None, client)
     assert subscriber.mqtt_client.on_connect == my_on_connect

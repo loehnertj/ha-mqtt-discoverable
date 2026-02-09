@@ -392,7 +392,8 @@ wrote_configuration: {self.wrote_configuration}
 
 _all_subscribers: WeakSet["Subscriber"] = WeakSet()
 
-def _check_subscriptions(client:mqtt.Client, *_):
+
+def _check_subscriptions(client: mqtt.Client, *_):
     """Subscribe all Subscribers belonging to the given client.
 
     The function will be attached as client.on_connect for all MQTT clients used
@@ -405,6 +406,7 @@ def _check_subscriptions(client:mqtt.Client, *_):
     for subscriber in _all_subscribers.copy():
         if subscriber.mqtt_client is client:
             subscriber.on_reconnect()
+
 
 class Subscriber(Discoverable[EntityType]):
     """
@@ -442,17 +444,15 @@ class Subscriber(Discoverable[EntityType]):
                 self.mqtt_client.on_connect = _check_subscriptions
             if self.mqtt_client.on_connect != _check_subscriptions:
                 logger.warning(
-                    "Client's on_connect callback is already set." 
-                    f"Please subscribe commands yourself, using Subscriber.on_reconnect()."
+                    "Client's on_connect callback is already set."
+                    "Please subscribe commands yourself, using Subscriber.on_reconnect()."
                 )
             # Try to subscribe right away if the client is already connected
             try:
                 self.on_reconnect()
-            except RuntimeError as e:
+            except RuntimeError:
                 # Not connected yet, will subscribe in the on_connect callback
-                logger.debug(
-                    f"MQTT client is not connected yet, will subscribe to {self._command_topic} when connected."
-                )
+                logger.debug(f"MQTT client is not connected yet, will subscribe to {self._command_topic} when connected.")
                 pass
         else:
             # Manually connect the MQTT client
