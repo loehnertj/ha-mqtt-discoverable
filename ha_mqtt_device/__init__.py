@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import dataclasses as dc
 import json
 import logging
 import ssl
@@ -21,14 +22,14 @@ from typing import Any, Generic, TypeVar
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import MQTTMessageInfo
 from paho.mqtt.enums import CallbackAPIVersion
-from pydantic import BaseModel, ConfigDict, model_validator
 
 from .utils import clean_string
 
 logger = logging.getLogger(__name__)
 
 
-class DeviceInfo(BaseModel):
+@dc.dataclass
+class DeviceInfo:
     """Information about a device a sensor belongs to"""
 
     name: str
@@ -53,20 +54,16 @@ class DeviceInfo(BaseModel):
         Assistant. Examples of such devices are hubs, or parent devices of a sub-device.
         This is used to show device topology in Home Assistant."""
 
-    @model_validator(mode="before")
-    @classmethod
-    def must_have_identifiers_or_connection(cls, values):
+    def __post_init__(self):
         """Check that either `identifiers` or `connections` is set"""
-        identifiers, connections = values.get("identifiers"), values.get("connections")
-        if identifiers is None and connections is None:
+        if self.identifiers is None and self.connections is None:
             raise ValueError("Define identifiers or connections")
-        return values
 
 
-class EntityInfo(BaseModel):
-    component: str
+@dc.dataclass
+class EntityInfo:
+    component: str = ""
     """One of the supported MQTT components, for instance `binary_sensor`"""
-    """Information about the sensor"""
     device: DeviceInfo | None = None
     """Information about the device this sensor belongs to"""
     device_class: str | None = None
@@ -84,7 +81,7 @@ class EntityInfo(BaseModel):
     """Sends update events even if the value hasn’t changed.\
     Useful if you want to have meaningful value graphs in history."""
     icon: str | None = None
-    name: str
+    name: str = ""
     """Name of the sensor inside Home Assistant"""
     object_id: str | None = None
     """Set this to generate the `entity_id` in HA instead of using `name`"""
@@ -96,44 +93,43 @@ class EntityInfo(BaseModel):
     display_name: str | None = None
     """Display name for Home Assistant UI. If not set, uses name."""
 
-    @model_validator(mode="before")
-    @classmethod
-    def device_need_unique_id(cls, values):
+    def __post_init__(self):
         """Check that `unique_id` is set if `device` is provided,\
             otherwise Home Assistant will not link the sensor to the device"""
-        device, unique_id = values.get("device"), values.get("unique_id")
-        if device is not None and unique_id is None:
+        if self.device is not None and self.unique_id is None:
             raise ValueError("A unique_id is required if a device is defined")
-        return values
+        if not self.name:
+            raise ValueError("Entity name must be set")
+
+@dc.dataclass
+class MQTT:
+    """Connection settings for the MQTT broker"""
+
+    host: str = "homeassistant"
+    port: int = 1883
+    username: str | None = None
+    password: str | None = None
+    client_name: str | None = None
+    use_tls: bool | None = False
+    tls_key: str | None = None
+    tls_certfile: str | None = None
+    tls_ca_cert: str | None = None
+
+    discovery_prefix: str = "homeassistant"
+    """The root of the topic tree where HA is listening for messages"""
+    state_prefix: str = "hmd"
+    """The root of the topic tree ha-mqtt-discovery publishes its state messages"""
+
+    client: mqtt.Client | None = None
+    """Optional MQTT client to use for the connection. If provided, most other settings are ignored."""
 
 
 EntityType = TypeVar("EntityType", bound=EntityInfo)
 
-
-class Settings(BaseModel, Generic[EntityType]):
-    class MQTT(BaseModel):
-        """Connection settings for the MQTT broker"""
-
-        # To use mqtt.Client
-        model_config = ConfigDict(arbitrary_types_allowed=True)
-
-        host: str = "homeassistant"
-        port: int = 1883
-        username: str | None = None
-        password: str | None = None
-        client_name: str | None = None
-        use_tls: bool | None = False
-        tls_key: str | None = None
-        tls_certfile: str | None = None
-        tls_ca_cert: str | None = None
-
-        discovery_prefix: str = "homeassistant"
-        """The root of the topic tree where HA is listening for messages"""
-        state_prefix: str = "hmd"
-        """The root of the topic tree ha-mqtt-discovery publishes its state messages"""
-
-        client: mqtt.Client | None = None
-        """Optional MQTT client to use for the connection. If provided, most other settings are ignored."""
+@dc.dataclass
+class Settings(Generic[EntityType]):
+    # Legacy alias for MQTT settings, so that user code keeps working.
+    class MQTT(MQTT): pass
 
     mqtt: MQTT
     """Connection to MQTT broker"""
@@ -328,8 +324,11 @@ wrote_configuration: {self.wrote_configuration}
         Will be used with the MQTT discovery protocol to make Home Assistant
         automagically ingest the new sensor.
         """
-        # Automatically generate a dict using pydantic
-        config = self._entity.model_dump(exclude_none=True, by_alias=True)
+        # Automatically generate a dict using dataclasses
+        def dict_factory(items):
+            """Make a dictionary but exclude fields with None values"""
+            return {k: v for k, v in items if v is not None}
+        config = dc.asdict(self._entity, dict_factory=dict_factory)
         # If display_name is set, use it instead of name for HA display
         if self._entity.display_name:
             config["name"] = self._entity.display_name

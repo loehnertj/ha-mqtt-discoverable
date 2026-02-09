@@ -15,20 +15,20 @@
 #
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import BinarySensor, BinarySensorInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import BinarySensor, BinarySensorInfo
 
 
 @pytest.fixture(name="sensor", params=["on", "custom_on"])
 def binary_sensor(request) -> BinarySensor:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = BinarySensorInfo(name="test", payload_on=request.param)
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     return BinarySensor(settings)
 
 
 def test_required_config():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = BinarySensorInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     sensor = BinarySensor(settings)

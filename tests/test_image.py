@@ -16,16 +16,15 @@
 from unittest.mock import patch
 
 import pytest
-from pydantic import ValidationError
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Image, ImageInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Image, ImageInfo
 
 
 @pytest.fixture
 def image(request) -> Image:
     url_topic, image_topic, image_encoding, content_type = request.param
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     image_info = ImageInfo(
         name="test_image", url_topic=url_topic, image_topic=image_topic, image_encoding=image_encoding, content_type=content_type
     )
@@ -35,7 +34,7 @@ def image(request) -> Image:
 
 def test_required_config():
     """Test to make sure an image instance can be created"""
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     image_info = ImageInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=image_info)
     image = Image(settings)
@@ -58,7 +57,7 @@ def test_url_topic_content_type_set_raises_exception():
 
 
 def test_image_topic_invalid_encoding_set_raises_exception():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         ImageInfo(name="test", image_encoding="invalid_encoding", image_topic="image_to_publish_to")  # type: ignore
 
 

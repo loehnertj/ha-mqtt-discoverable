@@ -16,16 +16,15 @@
 from unittest.mock import patch
 
 import pytest
-from pydantic import ValidationError
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Sensor, SensorInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Sensor, SensorInfo
 
 
 @pytest.fixture
 def make_sensor():
     def _make_sensor(suggested_display_precision: None | int = 2):
-        mqtt_settings = Settings.MQTT(host="localhost")
+        mqtt_settings = MQTT(host="localhost")
         sensor_info = SensorInfo(name="test", unit_of_measurement="kWh", suggested_display_precision=suggested_display_precision)
         settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
         return Sensor(settings)
@@ -72,30 +71,30 @@ def test_update_state_with_last_reset(sensor: Sensor):
 
 
 def test_invalid_suggested_display_precision(make_sensor):
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         make_sensor(suggested_display_precision=-1)
 
 
 def test_empty_options_list_raises_exception():
-    with pytest.raises(ValidationError, match="An empty options list is not allowed"):
+    with pytest.raises(ValueError, match="An empty options list is not allowed"):
         SensorInfo(name="test", options=[], device_class="enum")
 
 
 def test_options_wrong_device_class_raises_exception():
-    with pytest.raises(ValidationError, match="The sensor’s device_class must be set to enum."):
+    with pytest.raises(ValueError, match="The sensor's device_class must be set to enum."):
         SensorInfo(name="test", options=["a", "b", "c"], device_class="temperature")
 
 
 def test_options_with_state_class_raises_exception():
     with pytest.raises(
-        ValidationError, match="The options option cannot be used together with state_class or unit_of_measurement."
+        ValueError, match="The options option cannot be used together with state_class or unit_of_measurement."
     ):
         SensorInfo(name="test", options=["a", "b", "c"], device_class="enum", state_class="measurement")
 
 
 def test_options_with_unit_of_measurement_raises_exception():
     with pytest.raises(
-        ValidationError, match="The options option cannot be used together with state_class or unit_of_measurement."
+        ValueError, match="The options option cannot be used together with state_class or unit_of_measurement."
     ):
         SensorInfo(name="test", options=["a", "b", "c"], device_class="enum", unit_of_measurement="kWh")
 

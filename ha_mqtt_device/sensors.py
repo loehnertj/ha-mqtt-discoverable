@@ -16,11 +16,10 @@
 # Required to define a class itself as type https://stackoverflow.com/a/33533514
 from __future__ import annotations
 
+import dataclasses as dc
 import json
 import logging
-from typing import Annotated, Any, Literal
-
-from pydantic import Field, model_validator
+from typing import Any, Literal
 
 from . import (
     Discoverable,
@@ -31,6 +30,7 @@ from . import (
 logger = logging.getLogger(__name__)
 
 
+@dc.dataclass
 class BinarySensorInfo(EntityInfo):
     """Binary sensor specific information"""
 
@@ -45,6 +45,7 @@ class BinarySensorInfo(EntityInfo):
     """Payload to send for the OFF state"""
 
 
+@dc.dataclass
 class SensorInfo(EntityInfo):
     """Sensor specific information"""
 
@@ -67,7 +68,7 @@ class SensorInfo(EntityInfo):
     When last_reset_value_template is set, the state_class option must be total.
     Available variables: entity_id.
     The entity_id can be used to reference the entity's attributes."""
-    suggested_display_precision: None | Annotated[int, Field(ge=0)] = None
+    suggested_display_precision: int | None = None
     """
     The number of decimals which should be used in the sensor's state after rounding.
     """
@@ -80,21 +81,23 @@ class SensorInfo(EntityInfo):
     unit_of_measurement.
     """
 
-    @model_validator(mode="after")
-    def sensor_info_entity_model_validator(self) -> SensorInfo:
+    def __post_init__(self):
+        super().__post_init__()
         """
         Determine correct usage of configuration variables.
         """
+        if self.suggested_display_precision is not None and self.suggested_display_precision < 0:
+            raise ValueError("suggested_display_precision must be non-negative")
         if self.options is not None:
             if not self.options:
                 raise ValueError("An empty options list is not allowed")
             if self.device_class != "enum":
-                raise ValueError("The sensor’s device_class must be set to enum.")
+                raise ValueError("The sensor's device_class must be set to enum.")
             if self.unit_of_measurement or self.state_class:
                 raise ValueError("The options option cannot be used together with state_class or unit_of_measurement.")
-        return self
 
 
+@dc.dataclass
 class SwitchInfo(EntityInfo):
     """Switch specific information"""
 
@@ -116,12 +119,13 @@ class SwitchInfo(EntityInfo):
     """The MQTT topic subscribed to receive state updates."""
 
 
+@dc.dataclass
 class LightInfo(EntityInfo):
     """Light specific information"""
 
     component: str = "light"
 
-    state_schema: str = Field(default="json", alias="schema")  # 'schema' is a reserved word by pydantic
+    schema: str = "json"
     """Sets the schema of the state topic, ie the 'schema' field in the configuration"""
     optimistic: bool | None = None
     """Flag that defines if light works in optimistic mode.
@@ -151,6 +155,7 @@ class LightInfo(EntityInfo):
     """If the published message should have the retain flag on or not"""
 
 
+@dc.dataclass
 class CoverInfo(EntityInfo):
     """Cover specific information"""
 
@@ -183,6 +188,7 @@ class CoverInfo(EntityInfo):
     """If the published message should have the retain flag on or not"""
 
 
+@dc.dataclass
 class ButtonInfo(EntityInfo):
     """Button specific information"""
 
@@ -194,6 +200,7 @@ class ButtonInfo(EntityInfo):
     """If the published message should have the retain flag on or not"""
 
 
+@dc.dataclass
 class TextInfo(EntityInfo):
     """Information about the `text` entity"""
 
@@ -212,6 +219,7 @@ class TextInfo(EntityInfo):
     """If the published message should have the retain flag on or not"""
 
 
+@dc.dataclass
 class NumberInfo(EntityInfo):
     """Information about the 'number' entity"""
 
@@ -239,6 +247,7 @@ class NumberInfo(EntityInfo):
     unit_of_measurement can be null."""
 
 
+@dc.dataclass
 class DeviceTriggerInfo(EntityInfo):
     """Information about the device trigger"""
 
@@ -248,12 +257,18 @@ class DeviceTriggerInfo(EntityInfo):
 
     payload: str | None = None
     """Optional payload to match the payload being sent over the topic."""
-    type: str
+    type: str = ""
     """The type of the trigger"""
-    subtype: str
+    subtype: str = ""
     """The subtype of the trigger"""
 
+    def __post_init__(self):
+        super().__post_init__()
+        if not self.type:
+            raise ValueError("DeviceTriggerInfo 'type' must be set.")
 
+
+@dc.dataclass
 class CameraInfo(EntityInfo):
     """
     Information about the 'camera' entity.
@@ -261,7 +276,7 @@ class CameraInfo(EntityInfo):
 
     component: str = "camera"
     """The component type is 'camera' for this entity."""
-    topic: str
+    topic: str = ""
     """
     The MQTT topic to subscribe to receive the image payloads.
     """
@@ -274,7 +289,13 @@ class CameraInfo(EntityInfo):
     If not set, the image payload must be raw binary data.
     """
 
+    def __post_init__(self):
+        super().__post_init__()
+        if not self.topic:
+            raise ValueError("CameraInfo 'topic' must be set.")
 
+
+@dc.dataclass
 class ImageInfo(EntityInfo):
     """
     Information about the 'image' entity.
@@ -308,8 +329,8 @@ class ImageInfo(EntityInfo):
     retain: bool | None = None
     """If the published message should have the retain flag on or not."""
 
-    @model_validator(mode="after")
-    def image_info_entity_model_validator(self) -> ImageInfo:
+    def __post_init__(self):
+        super().__post_init__()
         """
         Determine correct usage of configuration variables.
         """
@@ -331,9 +352,8 @@ class ImageInfo(EntityInfo):
         if self.image_topic and not self.content_type:
             raise ValueError("Content type of image payload not set.")
 
-        return self
 
-
+@dc.dataclass
 class SelectInfo(EntityInfo):
     """
     Information about the 'select' entity.
@@ -345,10 +365,11 @@ class SelectInfo(EntityInfo):
     Default: true if no state_topic defined, else false."""
     retain: bool | None = None
     """If the published message should have the retain flag on or not"""
-    options: list = Field(default_factory=list)
+    options: list = dc.field(default_factory=list)
     """List of options that can be selected. An empty list or a list with a single item is allowed."""
 
 
+@dc.dataclass
 class LockInfo(EntityInfo):
     """
     Information about the 'lock' entity.

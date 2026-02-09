@@ -15,8 +15,8 @@
 #
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Light, LightInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Light, LightInfo
 
 # Test data
 COLOR_MODES: list[str] = ["rgb", "rgbw"]
@@ -27,7 +27,7 @@ EFFECTS: list[str] = ["rainbow", "my_custom_effect"]
 def make_light():
     def _make_light(color_mode: bool | None = None, effect: bool = False, supported_color_modes=None, effect_list=None):
         """Return a light instance"""
-        mqtt_settings = Settings.MQTT(host="localhost")
+        mqtt_settings = MQTT(host="localhost")
         sensor_info = LightInfo(
             name="test",
             color_mode=color_mode,
@@ -54,7 +54,7 @@ def light(make_light) -> Light:
 
 def test_required_config():
     """Test to make sure a light instance can be created"""
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = LightInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     sensor = Light(settings, lambda _, __, ___: None)

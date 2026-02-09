@@ -14,13 +14,13 @@ from unittest.mock import patch
 
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Camera, CameraInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Camera, CameraInfo
 
 
 @pytest.fixture
 def camera() -> Camera:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     camera_info = CameraInfo(name="test", topic="topic_to_publish_image_payload_to")
     settings = Settings(mqtt=mqtt_settings, entity=camera_info)
     return Camera(settings, lambda _, __, ___: None)

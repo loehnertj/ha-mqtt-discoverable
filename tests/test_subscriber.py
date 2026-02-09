@@ -27,7 +27,7 @@ from paho.mqtt import publish
 from paho.mqtt.client import MQTTMessage
 from paho.mqtt.enums import CallbackAPIVersion
 
-from ha_mqtt_discoverable import EntityInfo, Settings, Subscriber
+from ha_mqtt_device import EntityInfo, MQTT, Settings, Subscriber
 
 T = TypeVar("T")  # Used in the callback function
 
@@ -38,7 +38,7 @@ def make_subscriber():
         callback: Callable[[mqtt.Client, T, mqtt.MQTTMessage], Any] = lambda _, __, ___: None,
         mqtt_client: mqtt.Client | None = None,
     ):
-        mqtt_settings = Settings.MQTT(client=mqtt_client) if mqtt_client else Settings.MQTT(host="localhost")
+        mqtt_settings = MQTT(client=mqtt_client) if mqtt_client else MQTT(host="localhost")
         sensor_info = EntityInfo(name="".join(random.choices(string.ascii_lowercase + string.digits, k=10)), component="button")
         settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
         return Subscriber(settings, callback)

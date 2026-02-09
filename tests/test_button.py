@@ -15,13 +15,13 @@
 #
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Button, ButtonInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Button, ButtonInfo
 
 
 @pytest.fixture
 def button() -> Button:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     button_info = ButtonInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=button_info)
     # Define an empty `command_callback`

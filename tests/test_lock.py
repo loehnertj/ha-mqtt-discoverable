@@ -14,13 +14,13 @@ from unittest.mock import patch
 
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Lock, LockInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Lock, LockInfo
 
 
 @pytest.fixture
 def lock() -> Lock:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     lock_info = LockInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=lock_info)
     return Lock(settings, lambda _, __, ___: None)

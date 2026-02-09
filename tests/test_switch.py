@@ -15,13 +15,13 @@
 #
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Switch, SwitchInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Switch, SwitchInfo
 
 
 @pytest.fixture
 def switch() -> Switch:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = SwitchInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     # Define an empty `command_callback`
@@ -29,7 +29,7 @@ def switch() -> Switch:
 
 
 def test_required_config():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = SwitchInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     # Define empty callback

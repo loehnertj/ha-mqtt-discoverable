@@ -16,13 +16,13 @@
 
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Number, NumberInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Number, NumberInfo
 
 
 @pytest.fixture
 def number() -> Number:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     number_info = NumberInfo(name="test", min=5.0, max=90.0)
     settings = Settings(mqtt=mqtt_settings, entity=number_info)
     # Define empty callback
@@ -30,7 +30,7 @@ def number() -> Number:
 
 
 def test_required_config():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     number_info = NumberInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=number_info)
     # Define empty callback

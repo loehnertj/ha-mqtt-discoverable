@@ -15,14 +15,14 @@
 #
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Cover, CoverInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Cover, CoverInfo
 
 
 @pytest.fixture
 def cover() -> Cover:
     """Return a cover instance"""
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = CoverInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     return Cover(settings, lambda _, __, ___: None)
@@ -30,7 +30,7 @@ def cover() -> Cover:
 
 def test_required_config():
     """Test to make sure a cover instance can be created"""
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = CoverInfo(name="test")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     sensor = Cover(settings, lambda _, __, ___: None)

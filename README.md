@@ -6,6 +6,8 @@ This is a fork of [ha-mqtt-discoverable](https://github.com/unixorn/ha-mqtt-disc
 
 Changes:
 * Renamed package to ha_mqtt_device to avoid collision when installed alongside original ha_mqtt_discoverable.
+* Move Settings.MQTT inner class level-up to just MQTT. Old identifier kept as alias.
+* Eliminate pydantic dependency - converted all model classes to python-builtin dataclasses.
 
 
 **Original readme follows. If you use the fork, replace `ha_mqtt_discoverable` by`ha_mqtt_device` in any code examples.**

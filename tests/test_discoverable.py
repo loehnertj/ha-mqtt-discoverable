@@ -27,12 +27,12 @@ from paho.mqtt.enums import CallbackAPIVersion
 from paho.mqtt.subscribeoptions import SubscribeOptions
 from pytest_mock import MockerFixture
 
-from ha_mqtt_discoverable import DeviceInfo, Discoverable, EntityInfo, Settings
+from ha_mqtt_device import DeviceInfo, Discoverable, EntityInfo, MQTT, Settings
 
 
 @pytest.fixture
 def discoverable() -> Discoverable[EntityInfo]:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     return Discoverable[EntityInfo](settings)
@@ -41,7 +41,7 @@ def discoverable() -> Discoverable[EntityInfo]:
 @pytest.fixture
 def discoverable_availability() -> Discoverable[EntityInfo]:
     """Return an instance of Discoverable configured with `manual_availability`"""
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info, manual_availability=True)
     return Discoverable[EntityInfo](settings)
@@ -49,7 +49,7 @@ def discoverable_availability() -> Discoverable[EntityInfo]:
 
 @pytest.fixture
 def discoverable_custom_display_name() -> Discoverable[EntityInfo]:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="test", component="binary_sensor", display_name="test_测试")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     return Discoverable[EntityInfo](settings)
@@ -62,13 +62,13 @@ def test_required_config(discoverable):
 def test_missing_config():
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     # Missing MQTT settings
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         Settings(entity=sensor_info)  # type: ignore
 
 
 def test_custom_on_connect():
     """Test that the custom callback function is invoked when we connect to MQTT"""
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
 
@@ -87,7 +87,7 @@ def test_custom_on_connect_must_be_called(mocker: MockerFixture):
     mocked_client = mocker.patch("paho.mqtt.client.Client")
     mock_instance: MagicMock = mocked_client.return_value
 
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
 
@@ -108,7 +108,7 @@ def test_mqtt_topics(fixture, request):
 
 
 def test_mqtt_topics_with_device():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     device = DeviceInfo(name="test_device", identifiers="id")
     sensor_info = EntityInfo(name="test", component="binary_sensor", device=device, unique_id="unique_id")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
@@ -197,7 +197,7 @@ def test_device_with_unique_id():
 
 
 def test_name_with_space():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="Name with space", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     d = Discoverable[EntityInfo](settings)
@@ -210,7 +210,7 @@ def test_custom_display_name(discoverable_custom_display_name: Discoverable):
 
 
 def test_custom_object_id():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="Test name", component="binary_sensor", object_id="custom object id")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
     d = Discoverable[EntityInfo](settings)
@@ -286,7 +286,7 @@ def test_disconnect_client(mocker: MockerFixture):
     mocked_client = mocker.patch("paho.mqtt.client.Client")
     mock_instance = mocked_client.return_value
     mock_instance.connect.return_value = MQTT_ERR_SUCCESS
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
 
@@ -358,7 +358,7 @@ def test_update_state_does_not_publish_if_debug_is_true(discoverable: Discoverab
 
 
 def test_expect_exception_if_connecting_to_mqtt_broker_fails():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
 
@@ -369,7 +369,7 @@ def test_expect_exception_if_connecting_to_mqtt_broker_fails():
 
 
 def test_tls_key_uses_tls_set():
-    mqtt_settings = Settings.MQTT(host="localhost", tls_key="tlskey")
+    mqtt_settings = MQTT(host="localhost", tls_key="tlskey")
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
 
@@ -385,7 +385,7 @@ def test_tls_key_uses_tls_set():
 
 
 def test_use_tls_uses_tls_set():
-    mqtt_settings = Settings.MQTT(host="localhost", use_tls=True)
+    mqtt_settings = MQTT(host="localhost", use_tls=True)
     sensor_info = EntityInfo(name="test", component="binary_sensor")
     settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
 

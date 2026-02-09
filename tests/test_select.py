@@ -15,13 +15,13 @@ from unittest.mock import patch
 
 import pytest
 
-from ha_mqtt_discoverable import Settings
-from ha_mqtt_discoverable.sensors import Select, SelectInfo
+from ha_mqtt_device import MQTT, Settings
+from ha_mqtt_device.sensors import Select, SelectInfo
 
 
 @pytest.fixture
 def select() -> Select:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     select_info = SelectInfo(name="test", options=["one", "two", "three"])
     settings = Settings(mqtt=mqtt_settings, entity=select_info)
     return Select(settings, lambda _, __, ___: None)

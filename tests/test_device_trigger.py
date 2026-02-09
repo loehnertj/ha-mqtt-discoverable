@@ -15,13 +15,13 @@
 #
 import pytest
 
-from ha_mqtt_discoverable import DeviceInfo, Settings
-from ha_mqtt_discoverable.sensors import DeviceTrigger, DeviceTriggerInfo
+from ha_mqtt_device import DeviceInfo, MQTT, Settings
+from ha_mqtt_device.sensors import DeviceTrigger, DeviceTriggerInfo
 
 
 @pytest.fixture(name="device_trigger")
 def device_trigger() -> DeviceTrigger:
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     device_info = DeviceInfo(name="test", identifiers="id")
     sensor_info = DeviceTriggerInfo(
         name="test",
@@ -35,7 +35,7 @@ def device_trigger() -> DeviceTrigger:
 
 
 def test_required_config():
-    mqtt_settings = Settings.MQTT(host="localhost")
+    mqtt_settings = MQTT(host="localhost")
     device_info = DeviceInfo(name="test", identifiers="id")
     sensor_info = DeviceTriggerInfo(
         name="test",
