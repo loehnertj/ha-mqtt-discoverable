@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+from http import client
 import logging
 import random
 import string
@@ -75,14 +76,15 @@ def create_callback(event: Event, expected_payload: str) -> Callable:
     return custom_callback
 
 
-def create_external_mqtt_client() -> mqtt.Client:
+def create_external_mqtt_client(already_connected: bool) -> mqtt.Client:
     mqtt_client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
-    mqtt_client.connect(host="localhost")
-    mqtt_client.loop_start()
+    if already_connected:
+        mqtt_client.connect(host="localhost")
+        mqtt_client.loop_start()
     return mqtt_client
 
 
-@pytest.mark.parametrize("mqtt_client", [None, create_external_mqtt_client()])
+@pytest.mark.parametrize("mqtt_client", [None, create_external_mqtt_client(True), create_external_mqtt_client(False)])
 def test_command_callbacks(make_subscriber, mqtt_client):
     # Flag that waits for the command to be received
     event1 = Event()
@@ -93,6 +95,9 @@ def test_command_callbacks(make_subscriber, mqtt_client):
     custom_callback2 = create_callback(event2, expected_payload2)
     subscriber1 = make_subscriber(custom_callback1, mqtt_client)
     subscriber2 = make_subscriber(custom_callback2, mqtt_client)
+    if mqtt_client and not mqtt_client.is_connected():
+        mqtt_client.connect(host="localhost")
+        mqtt_client.loop_start()
     # Wait for the subscription to take effect
     time.sleep(1)
 
@@ -105,9 +110,13 @@ def test_command_callbacks(make_subscriber, mqtt_client):
     assert event1.wait(1)
     assert event2.wait(1)
 
-
-def test_expect_exception_if_subscribing_the_command_topic_fails(make_subscriber):
-    mqtt_client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
-    # MQTT client is _not_ connected to the broker
-    with pytest.raises(RuntimeError, match="Error subscribing to MQTT command topic"):
-        make_subscriber(lambda _, __, ___: None, mqtt_client)
+def test_external_client_with_on_connect_not_replaced(make_subscriber):
+    """If the client already brings an on_connect callback, it won't
+    be touched when passed into a subscriber.
+    """
+    client = create_external_mqtt_client(False)
+    def my_on_connect(client, userdata, flags, rc):
+        pass
+    client.on_connect = my_on_connect
+    subscriber = make_subscriber(lambda *_: None, client)
+    assert subscriber.mqtt_client.on_connect == my_on_connect

@@ -17,6 +17,7 @@ import logging
 import ssl
 from collections.abc import Callable
 from typing import Any, Generic, TypeVar
+from weakref import WeakSet
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import MQTTMessageInfo
@@ -389,6 +390,22 @@ wrote_configuration: {self.wrote_configuration}
             self.mqtt_client.loop_stop()
 
 
+_all_subscribers: WeakSet["Subscriber"] = WeakSet()
+
+def _check_subscriptions(client:mqtt.Client, *_):
+    """Subscribe all Subscribers belonging to the given client.
+
+    The function will be attached as client.on_connect for all MQTT clients used
+    by Subscriber instances, so it will be called whenever *any* connection is
+    established.
+
+    In the callback, we subscribe just the Subscriber instances for the client
+    that was connected.
+    """
+    for subscriber in _all_subscribers.copy():
+        if subscriber.mqtt_client is client:
+            subscriber.on_reconnect()
+
 class Subscriber(Discoverable[EntityType]):
     """
     Specialized sub-lass that listens to commands coming from an MQTT topic
@@ -411,15 +428,9 @@ class Subscriber(Discoverable[EntityType]):
             coming from the MQTT command topic
         """
 
-        # Callback invoked when the MQTT connection is established
-        def on_client_connected(client: mqtt.Client, *_):
-            # Subscribe to the command topic
-            result, __ = client.subscribe(self._command_topic, qos=1)
-            if result is not mqtt.MQTT_ERR_SUCCESS:
-                raise RuntimeError("Error subscribing to MQTT command topic")
-
+        _all_subscribers.add(self)
         # Invoke the parent init
-        super().__init__(settings, on_client_connected)
+        super().__init__(settings, _check_subscriptions)
         # Define the command topic to receive commands from HA, using `hmd` topic prefix
         self._command_topic = f"{self._settings.mqtt.state_prefix}/{self._entity_topic}/command"
 
@@ -427,13 +438,32 @@ class Subscriber(Discoverable[EntityType]):
         self.mqtt_client.message_callback_add(self._command_topic, command_callback)
 
         if self._settings.mqtt.client:
-            # externally created MQTT client is used
-            # which needs to be connected already
-            # therefor explicitly subscribe to the command topic
-            on_client_connected(self.mqtt_client)
+            if self.mqtt_client.on_connect is None:
+                self.mqtt_client.on_connect = _check_subscriptions
+            if self.mqtt_client.on_connect != _check_subscriptions:
+                logger.warning(
+                    "Client's on_connect callback is already set." 
+                    f"Please subscribe commands yourself, using Subscriber.on_reconnect()."
+                )
+            # Try to subscribe right away if the client is already connected
+            try:
+                self.on_reconnect()
+            except RuntimeError as e:
+                # Not connected yet, will subscribe in the on_connect callback
+                logger.debug(
+                    f"MQTT client is not connected yet, will subscribe to {self._command_topic} when connected."
+                )
+                pass
         else:
             # Manually connect the MQTT client
             self._connect_client()
+
+    def on_reconnect(self):
+        """Subscribe to the command topic when a connection is established"""
+        logger.info(f"Subscribing to command topic {self._command_topic}")
+        result, __ = self.mqtt_client.subscribe(self._command_topic, qos=1)
+        if result is not mqtt.MQTT_ERR_SUCCESS:
+            raise RuntimeError(f"Error subscribing to MQTT command topic {self._command_topic}")
 
     def generate_config(self) -> dict[str, Any]:
         """Override base config to add the command topic"""
