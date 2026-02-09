@@ -128,9 +128,6 @@ EntityType = TypeVar("EntityType", bound=EntityInfo)
 
 @dc.dataclass
 class Settings(Generic[EntityType]):
-    # Legacy alias for MQTT settings, so that user code keeps working.
-    class MQTT(MQTT): pass
-
     mqtt: MQTT
     """Connection to MQTT broker"""
     entity: EntityType
@@ -139,6 +136,9 @@ class Settings(Generic[EntityType]):
     manual_availability: bool = False
     """If true, the entity `availability` inside HA must be manually managed
     using the `set_availability()` method"""
+
+    # Legacy alias for MQTT settings, so that user code keeps working.
+    class MQTT(MQTT): pass
 
 
 class Discoverable(Generic[EntityType]):
